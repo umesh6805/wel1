@@ -1,11 +1,81 @@
-name: Flask CI
-on: [push]
+name: Flask CI/CD Demo
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-  test:
+
+  build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with: {python-version: '3.11'}
-    - run: pip install -r requirements.txt
-    - run: pytest
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Packages
+        run: |
+          pip install -r requirements.txt
+
+  test:
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install -r requirements.txt
+
+      - name: Run Tests
+        run: pytest
+
+  deploy:
+
+    needs: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Backup Current Deployment
+        run: |
+          mkdir -p deploy
+          cp app.py deploy/app_backup.py
+
+      - name: Deploy New Version
+        run: |
+          cp app.py deploy/app.py
+
+      - name: Verify Deployment
+        run: |
+          ls deploy
+
+      - name: Simulate Health Check Failure
+        run: |
+          echo "Health Check Failed"
+          exit 1
+
+      - name: Rollback
+        if: failure()
+        run: |
+          echo "Rollback Started..."
+          cp deploy/app_backup.py deploy/app.py
+          echo "Rollback Successful"
+
+      - name: Verify Rollback
+        if: failure()
+        run: |
+          ls deploy
