@@ -22,7 +22,7 @@ def login():
         msg='Invalid credentials'
     return render_template('login.html',msg=msg)
 @app.route('/home')
-def home():
+def home(:
     if 'user' not in session: return redirect(url_for('login'))
     return render_template('home.html',user=session['user'])
 @app.route('/logout')
